@@ -1,11 +1,20 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 class App extends React.Component {
+
+  /*
+    Constructor to keep track of the following
+    1. Players turn
+    2. Players
+    3. Board
+    4. Game Finished?
+    5. Messages
+  */
   constructor(props) {
     super(props);
 
+    // Players and the state
     this.state = {
       player1: 1,
       player2: 2,
@@ -37,10 +46,22 @@ class App extends React.Component {
     });
   }
 
+  // Toggle the player
   togglePlayer() {
     return (this.state.currentPlayer === this.state.player1) ? this.state.player2 : this.state.player1;
   }
 
+  // pick random spot
+  randomPlay() {
+    return Math.floor(Math.random() * Math.floor(7));
+  }
+
+  // AI Plays
+  aiPlay() {
+    return this.play(this.randomPlay());
+  }
+
+  // Make a move
   play(c) {
     if (!this.state.gameOver) {
       // Place piece on board
@@ -61,13 +82,20 @@ class App extends React.Component {
       } else if (result === 'draw') {
         this.setState({ board, gameOver: true, message: 'Draw game.' });
       } else {
-        this.setState({ board, currentPlayer: this.togglePlayer() });
+        this.setState({ board, currentPlayer: this.togglePlayer() },
+        () => {
+          // Call ai play
+          if(this.state.currentPlayer === 2) {
+            this.aiPlay();
+          }
+        })
       }
     } else {
       this.setState({ message: 'Game over. Please start a new game.' });
     }
   }
 
+  // Check if the vertical is a winning move
   checkVertical(board) {
     // Check only if row is 3 or greater
     for (let r = 3; r < 6; r++) {
@@ -83,6 +111,8 @@ class App extends React.Component {
     }
   }
 
+
+  // Check if the horizontal is a winning move
   checkHorizontal(board) {
     // Check only if column is 3 or less
     for (let r = 0; r < 6; r++) {
@@ -98,6 +128,7 @@ class App extends React.Component {
     }
   }
 
+  // Check if the positive slope is a winning move
   checkDiagonalRight(board) {
     // Check only if row is 3 or greater AND column is 3 or less
     for (let r = 3; r < 6; r++) {
@@ -113,6 +144,7 @@ class App extends React.Component {
     }
   }
 
+  // Check if the negative slope is a winning move
   checkDiagonalLeft(board) {
     // Check only if row is 3 or greater AND column is 3 or greater
     for (let r = 3; r < 6; r++) {
@@ -128,6 +160,7 @@ class App extends React.Component {
     }
   }
 
+  // Check if the game is a draw game
   checkDraw(board) {
     for (let r = 0; r < 6; r++) {
       for (let c = 0; c < 7; c++) {
