@@ -13,6 +13,25 @@ table {
   border-spacing: 0px 0px;
 }
 
+.row {
+    display: flex;
+    margin: 2%;
+    align-items: center;
+    justify-content: center;
+}
+
+.player {
+    margin: 2%;
+}
+
+.inactivePlayer {
+    opacity: 0.3;
+}
+
+.activePlayer {
+    opacity: 1;
+}
+
 .button {
   background-color: #303030;
   color: #50C8FF;
