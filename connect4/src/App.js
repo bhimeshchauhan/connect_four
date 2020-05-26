@@ -1,5 +1,6 @@
 import React from "react";
 import "./App.css";
+import _ from 'lodash'
 
 class App extends React.Component {
     /*
@@ -62,7 +63,8 @@ class App extends React.Component {
 
     // random player starts
     randomStart() {
-        const randomPlayer = Math.floor(Math.random() * (3 - 1) + 1);
+//        const randomPlayer = Math.floor(Math.random() * (3 - 1) + 1);
+        const randomPlayer = 2;
         if (randomPlayer === 2) {
             this.setState(
                 {
@@ -77,12 +79,19 @@ class App extends React.Component {
 
     // AI Plays
     aiPlay() {
-        return this.play(this.randomPlay());
+        const board = this.state.board;
+        const col = this.pickBestMove();
+        this.play(col)
+    }
+
+    // put the move
+    makeMove(board, row, col, player) {
+        return board[row][col] = player;
     }
 
     // Make a move
     play(c) {
-    if (!this.state.gameOver) {
+        if (!this.state.gameOver) {
         // Place piece on board
         let board = this.state.board;
         for (let r = 5; r >= 0; r--) {
@@ -129,9 +138,8 @@ class App extends React.Component {
                         500
                     );
                 }
-            );
-        }
-    } else {
+            )}
+        } else {
             this.setState({
                 message: "Game over. Please start a new game.",
             });
@@ -234,20 +242,14 @@ class App extends React.Component {
 
     componentWillMount() {
         this.initBoard();
-        this.pickBestMove([
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [null, null, null, null, null, null, null],
-            [1, null, null, null, null, null, null],
-            [1, null, null, null, 2, null, 2],
-        ])
     }
 
+    // get columns in a singular array
     arrayColumn(arr, n){
         return arr.map(x => x[n]);
     }
 
+    // get the nth column
     getNCols(arr){
         const tempCol = []
         for(let i=0; i<arr.length-3; i++){
@@ -256,18 +258,32 @@ class App extends React.Component {
         return tempCol;
     }
 
+    // Get the count of a particular stone in the array.
     getCount(arr, n) {
         return arr.reduce((total,x) => (x==n ? total+1 : total), 0)
     }
 
-    isValidLocation(board, col) {
+    // Is this a valid location to add the move to
+    isValidLocation(col) {
+        const board = this.state.board;
         return board[5][col] === null;
     }
 
+    // Score the move for AI
+    scoreEvaluation(arr, player) {
+        let score = 0
+        if(this.getCount(arr, player) === 4){
+            score += 100;
+        } else if (this.getCount(arr, player) === 3 &&
+        this.getCount(arr, null) === 1) {
+            score += 10;
+        }
+        return score
+    }
+
     // score the game vertically and horizontally
-    scoreMove() {
-        const score = 0;
-        const board  = this.state.board;
+    scoreMove(board, player) {
+        let score = 0;
         const column = [];
 //        for(let i=0; i<board.length; i++){
 //            const tempCol = []
@@ -278,30 +294,50 @@ class App extends React.Component {
             column.push(this.getNCols(board[i]))
         }
         let mergedCols = [].concat.apply([], column);
+        // Horizontal moves for AI
         for(let i=0; i<mergedCols.length; i++){
-            console.log(mergedCols[i], this.getCount(mergedCols[i], 1), this.getCount(mergedCols[i], 2),  this.getCount(mergedCols[i], null))
-            if(this.getCount(mergedCols[i], this.state.currentPlayer) === 4){
-                score += 100;
-            } else if (this.getCount(mergedCols[i], this.state.currentPlayer) === 3 && this.getCount(mergedCols[i], null) === 1) {
-                score += 10;
-            }
+            score += this.scoreEvaluation(mergedCols[i], 2)
         }
         return score
     }
 
+    // Get all the valid locations
     getValidLocations(board) {
         const validLocations = []
         for(let i = 0; i<7; i++) {
-            if (this.isValidLocation(board, i)) {
+            if (this.isValidLocation(i)) {
                 validLocations.push(i)
             }
         }
         return validLocations
     }
 
-    pickBestMove(board) {
-        const validLocations = this.getValidLocations(board)
-        console.log(validLocations)
+    // next row that can be played
+    getNextPlayableRow(board, col) {
+        for (let r = 5; r >= 0; r--) {
+            if(board[r][col] === null) {
+                return r
+            }
+        }
+    }
+
+    // AI picks best moves
+    pickBestMove() {
+        const board = this.state.board;
+        const validLocations = this.getValidLocations(board);
+        let bestScore = 0;
+        let bestColumns = this.randomPlay();
+        for(let i = 0; i<validLocations.length; i++) {
+            const row = this.getNextPlayableRow(board, validLocations[i])
+            let tempBoard = _.cloneDeep(board);
+            this.makeMove(tempBoard, row, validLocations[i], 2)
+            const score = this.scoreMove(tempBoard, 2)
+            if (score > bestScore) {
+                bestScore = score
+                bestColumns = validLocations[i]
+            }
+        }
+        return bestColumns
     }
 
     render() {
@@ -352,6 +388,7 @@ const Row = ({ row, play }) => {
     );
 };
 
+// Cell Component
 const Cell = ({ value, columnIndex, play }) => {
     let color = "white";
     if (value === 1) {
@@ -365,7 +402,7 @@ const Cell = ({ value, columnIndex, play }) => {
             <div
                 className="cell"
                 onClick={() => {
-                play(columnIndex);
+                    play(columnIndex);
                 }}
             >
             <div className={color}> </div>{" "}
