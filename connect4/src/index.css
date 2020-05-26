@@ -1,11 +1,15 @@
-
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 body {
-  font-family: 'Lucida Sans Unicode';
+    font-family: 'VT323', monospace;
 }
 
 h1 {
   text-align: center;
   font-size: 50px;
+}
+
+.header {
+  font-size: 100px;
 }
 
 table {
@@ -35,8 +39,8 @@ table {
 .button {
   background-color: #303030;
   color: #50C8FF;
-  height: 30px;
-  width: 100px;
+  height: 7%;
+  width: 34%;
   border-radius: 5px;
   margin: 0 auto;
   margin-bottom: 25px;
@@ -114,3 +118,29 @@ table {
   border-radius: 100px;
   transition: background-color 0.5s;
 }
+
+.winorloss {
+    position: fixed; /* Sit on top of the page content */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+    margin: 0 auto;
+    display: table;
+}
+
+.centerDiv {
+    display: table-cell;
+    vertical-align: middle;
+    font-family: 'VT323', monospace;
+    font-size: 50px;
+}
+
+
+/* Replay button */
+

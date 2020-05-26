@@ -61,11 +61,16 @@ class App extends React.Component {
         return Math.floor(Math.random() * Math.floor(7));
     }
 
+    // random choice from array
+    randomChoice(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
     // random player starts
     randomStart() {
         const randomPlayer = Math.floor(Math.random() * (3 - 1) + 1);
 //        const randomPlayer = 2;
-        if (randomPlayer === 2) {
+        if (randomPlayer === this.state.player2) {
             this.setState(
                 {
                     currentPlayer: randomPlayer,
@@ -80,7 +85,8 @@ class App extends React.Component {
     // AI Plays
     aiPlay() {
         const board = this.state.board;
-        const col = this.pickBestMove();
+//        const col = this.pickBestMove();
+        const [col, minimaxScore] = this.minimax(board, 4, true)
         this.play(col)
     }
 
@@ -131,7 +137,7 @@ class App extends React.Component {
                     setTimeout(
                         function () {
                             // Call ai play
-                            if (this.state.currentPlayer === 2) {
+                            if (this.state.currentPlayer === this.state.player2) {
                                 this.aiPlay();
                             }
                         }.bind(this),
@@ -260,7 +266,7 @@ class App extends React.Component {
 
     // Get the count of a particular stone in the array.
     getCount(arr, n) {
-        return arr.reduce((total,x) => (x==n ? total+1 : total), 0)
+        return arr.reduce((total,x) => (x===n ? total+1 : total), 0)
     }
 
     // Is this a valid location to add the move to
@@ -328,7 +334,7 @@ class App extends React.Component {
         for(let i=0; i<6; i++){
             centerArray.push(board[i][3]);
         }
-        score += this.getCount(centerArray, 2)*6
+        score += this.getCount(centerArray, this.state.player2)*6
 
         // Horizontal moves for AI
         for(let i=0; i<board.length; i++){
@@ -336,7 +342,7 @@ class App extends React.Component {
         }
         const groupedRows = this.flatten(row);
         for(let i=0; i<groupedRows.length; i++){
-            score += this.scoreEvaluation(groupedRows[i], 2)
+            score += this.scoreEvaluation(groupedRows[i], this.state.player2)
         }
 
         // Vertical moves for AI
@@ -347,7 +353,7 @@ class App extends React.Component {
         }
         const groupedCols = this.flatten(col);
         for(let i=0; i<groupedCols.length; i++){
-            score += this.scoreEvaluation(groupedCols[i], 2)
+            score += this.scoreEvaluation(groupedCols[i], this.state.player2)
         }
 
         // Positive slopes
@@ -355,7 +361,7 @@ class App extends React.Component {
         for(let i=3; i<6; i++){
             for(let j=0; j<4; j++){
                 posArr = this.posDiagonal(board, i, j);
-                score += this.scoreEvaluation(posArr, 2)
+                score += this.scoreEvaluation(posArr, this.state.player2)
             }
         }
 
@@ -364,7 +370,7 @@ class App extends React.Component {
         for(let i=3; i<6; i++){
             for(let j=3; j<7; j++){
                 negArr = this.negDiagonal(board, i, j);
-                score += this.scoreEvaluation(negArr, 2)
+                score += this.scoreEvaluation(negArr, this.state.player2)
             }
         }
 
@@ -401,8 +407,8 @@ class App extends React.Component {
         for(let i = 0; i<validLocations.length; i++) {
             const row = this.getNextPlayableRow(board, validLocations[i])
             let tempBoard = _.cloneDeep(board);
-            this.makeMove(tempBoard, row, validLocations[i], 2)
-            const score = this.scoreMove(tempBoard, 2)
+            this.makeMove(tempBoard, row, validLocations[i], this.state.player2)
+            const score = this.scoreMove(tempBoard, this.state.player2)
             if (score > bestScore) {
                 bestScore = score
                 bestColumns = validLocations[i]
@@ -411,36 +417,106 @@ class App extends React.Component {
         return bestColumns
     }
 
+    minimax(board, depth, maximizingPlayer) {
+        const validLocations = this.getValidLocations();
+        let result = this.checkAll(board);
+        if(depth === 0 || this.state.gameOver) {
+            if(this.state.gameOver) {
+                if(result === this.state.player2) {
+                    return [null, Number.POSITIVE_INFINITY];
+                } else if(result === this.state.player1) {
+                    return [null,  Number.NEGATIVE_INFINITY];
+                } else {
+                    return [null, 0];
+                }
+            } else {
+                return [null, this.scoreMove(board, this.state.player2)]
+            }
+        }
+        if(maximizingPlayer) {
+            let value = Number.NEGATIVE_INFINITY;
+            let bestColumns = this.randomChoice(validLocations);
+            for(let i=0; i<validLocations.length; i++) {
+                const row = this.getNextPlayableRow(board, validLocations[i])
+                let tempBoard = _.cloneDeep(board);
+                if(row){
+                    this.makeMove(tempBoard, row, validLocations[i], this.state.player2)
+                    const score = this.minimax(tempBoard, depth-1, false)
+                    if (score[1] > value) {
+                        value = score[1]
+                        bestColumns = validLocations[i]
+                    }
+                }
+            }
+            return [bestColumns, value]
+        } else {
+            let value = Number.POSITIVE_INFINITY;
+            let bestColumns = this.randomChoice(validLocations);
+            for(let i=0; i<validLocations.length; i++) {
+                const row = this.getNextPlayableRow(board, validLocations[i])
+                let tempBoard = _.cloneDeep(board);
+                if(row){
+                    this.makeMove(tempBoard, row, validLocations[i], 1)
+                    const score = this.minimax(tempBoard, depth-1, true)
+                    if (score[1] < value) {
+                        value = score[1]
+                        bestColumns = validLocations[i]
+                    }
+                }
+            }
+            return [bestColumns, value]
+        }
+    }
+
     render() {
         return (
             <div>
-                <h1 className="animated fadeInRightBig"> {this.props.name} </h1>{" "}
-                <div
-                    className="button"
-                    onClick={() => {
-                    this.initBoard();
-                    }}
-                >
-                    {" "}
-                    New Game{" "}
-                </div>{" "}
-                <div className={"row"}>
-                    <div className={"player red" + (this.state.currentPlayer === 1 ? " activePlayer" : " inactivePlayer")}> </div>
-                    <div className={"player yellow" + (this.state.currentPlayer === 2 ? " activePlayer" : " inactivePlayer")}> </div>
+                <div className="winorloss " style={{backgroundColor:
+                    this.state.gameOver && this.state.currentPlayer === 1 ?
+                    "rgba(0,200,0,0.5)": "rgba(200,0,0,0.3)",
+                    display: this.state.gameOver && this.state.currentPlayer?
+                    "table": "none"
+                }}>
+                    <div className="centerDiv">
+                        { (this.state.gameOver && this.state.currentPlayer === 1) ?
+                            <div>
+                                <h1>{"Yay, You WON!!!"}</h1>
+                            </div> :
+                            <div>
+                                <h1>{"Shoot, you LOST!!!"}</h1>
+                            </div>
+                        }
+                        <div
+                            className="button"
+                            onClick={() => {
+                            this.initBoard();
+                            }}
+                        >
+                            {" "}
+                            New Game{" "}
+                        </div>{" "}
                     </div>
-                <table>
-                    <thead></thead>
-                    {" "}
-                    <tbody>
+                </div>
+                <div className="game">
+                    <h1 className="header"> {this.props.name} </h1>{" "}
+                    <div className={"row"}>
+                        <div className={"player red" + (this.state.currentPlayer === this.state.player1 ? " activePlayer" : " inactivePlayer")}> </div>
+                        <div className={"player yellow" + (this.state.currentPlayer === this.state.player2 ? " activePlayer" : " inactivePlayer")}> </div>
+                        </div>
+                    <table>
+                        <thead></thead>
                         {" "}
-                        {this.state.board.map((row, i) => (
-                        <Row key={i} row={row} play={this.play} />
-                        ))}
+                        <tbody>
+                            {" "}
+                            {this.state.board.map((row, i) => (
+                            <Row key={i} row={row} play={this.play} />
+                            ))}
+                            {" "}
+                        </tbody>
                         {" "}
-                    </tbody>
-                    {" "}
-                </table>
-                <p className="message"> {this.state.message} </p>{" "}
+                    </table>
+                    <p className="message"> {this.state.message} </p>{" "}
+                </div>
             </div>
         );
     }
