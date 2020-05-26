@@ -280,6 +280,9 @@ class App extends React.Component {
         } else if (this.getCount(arr, player) === 2 &&
         this.getCount(arr, null) === 2) {
             score += 5;
+        } else if (this.getCount(arr, player) === 0 &&
+        this.getCount(arr, null) === 6) {
+            score += 1;
         }
         if(this.getCount(arr, 1) === 3 &&
         this.getCount(arr, null) === 1){
@@ -319,6 +322,13 @@ class App extends React.Component {
         let score = 0;
         const row = [];
         const col = [];
+
+        // Center column preferences
+        let centerArray = []
+        for(let i=0; i<6; i++){
+            centerArray.push(board[i][3]);
+        }
+        score += this.getCount(centerArray, 2)*6
 
         // Horizontal moves for AI
         for(let i=0; i<board.length; i++){
