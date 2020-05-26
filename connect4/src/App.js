@@ -271,6 +271,7 @@ class App extends React.Component {
     // Score the move for AI
     scoreEvaluation(arr, player) {
         let score = 0
+
         if(this.getCount(arr, player) === 4){
             score += 100;
         } else if (this.getCount(arr, player) === 3 &&
@@ -279,6 +280,13 @@ class App extends React.Component {
         } else if (this.getCount(arr, player) === 2 &&
         this.getCount(arr, null) === 2) {
             score += 5;
+        }
+        if(this.getCount(arr, 1) === 3 &&
+        this.getCount(arr, null) === 1){
+            score -= 80;
+        } else if (this.getCount(arr, 1) === 2 &&
+        this.getCount(arr, null) === 2){
+            score -= 10;
         }
         return score
     }
@@ -378,7 +386,7 @@ class App extends React.Component {
     pickBestMove() {
         const board = this.state.board;
         const validLocations = this.getValidLocations();
-        let bestScore = 0;
+        let bestScore = Number.NEGATIVE_INFINITY;
         let bestColumns = this.randomPlay();
         for(let i = 0; i<validLocations.length; i++) {
             const row = this.getNextPlayableRow(board, validLocations[i])
