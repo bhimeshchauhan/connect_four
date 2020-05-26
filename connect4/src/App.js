@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
-import _ from 'lodash'
+import _ from 'lodash';
+import ToggleButtonWrapper from './button.js';
 
 class App extends React.Component {
     /*
@@ -22,10 +23,12 @@ class App extends React.Component {
             board: [],
             gameOver: false,
             message: "",
+            mode: true // true = naive ai and false is minimax ai
         };
 
         // Bind play function to App component
         this.play = this.play.bind(this);
+        this.getModeChange = this.getModeChange.bind(this);
     }
 
     // Starts new game
@@ -69,7 +72,6 @@ class App extends React.Component {
     // random player starts
     randomStart() {
         const randomPlayer = Math.floor(Math.random() * (3 - 1) + 1);
-//        const randomPlayer = 2;
         if (randomPlayer === this.state.player2) {
             this.setState(
                 {
@@ -85,8 +87,12 @@ class App extends React.Component {
     // AI Plays
     aiPlay() {
         const board = this.state.board;
-//        const col = this.pickBestMove();
-        const [col, minimaxScore] = this.minimax(board, 4, true)
+        let col, minimaxScore;
+        if(this.state.mode) {
+            col = this.pickBestMove();
+        } else {
+            [col, minimaxScore] = this.minimax(board, 4, true)
+        }
         this.play(col)
     }
 
@@ -468,6 +474,10 @@ class App extends React.Component {
         }
     }
 
+    getModeChange() {
+        return this.setState({ mode: !this.state.mode });
+    }
+
     render() {
         return (
             <div>
@@ -499,6 +509,7 @@ class App extends React.Component {
                 </div>
                 <div className="game">
                     <h1 className="header"> {this.props.name} </h1>{" "}
+                    <ToggleButtonWrapper getModeChange={this.getModeChange}/>
                     <div className={"row"}>
                         <div className={"player red" + (this.state.currentPlayer === this.state.player1 ? " activePlayer" : " inactivePlayer")}> </div>
                         <div className={"player yellow" + (this.state.currentPlayer === this.state.player2 ? " activePlayer" : " inactivePlayer")}> </div>
